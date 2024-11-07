@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Simple Game</title>
+</head>
+<body>
+    <h1>Welcome to My Game!</h1>
+    <p>Press the button to play:</p>
+    <button onclick="playGame()">Play</button>
+    
+    <script>
+        // Simple JavaScript game logic
+        function playGame() {
+            const result = Math.random() > 0.5 ? "You Win!" : "Try Again!";
+            alert(result);
+        }
+    </script>
+</body>
+</html>
