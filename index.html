@@ -38,6 +38,7 @@
             font-weight: bold;
             font-size: 0.8em;
             border-radius: 5px;
+            position: relative;
         }
 
         .plain-tile {
@@ -51,10 +52,11 @@
 
         /* Player and bot piece styling */
         .piece {
+            width: 50px; /* Increased size */
+            height: 50px;
             position: absolute;
-            width: 40px;
-            height: 40px;
             transition: top 0.5s, left 0.5s;
+            z-index: 10; /* Ensure pieces are above tiles */
         }
 
         #character-selection, #game-controls {
@@ -68,6 +70,7 @@
             cursor: pointer;
             border: 2px solid transparent;
             margin: 5px;
+            width: 75px; /* Larger selection images */
         }
 
         .character.selected {
@@ -91,9 +94,9 @@
     <div id="character-selection">
         <h1>Select Your Character</h1>
         <div id="character-options">
-            <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/jason.PNG" class="character" data-character="1" width="250" alt="Character 1">
-            <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/shan.PNG" class="character" data-character="2" width="250" alt="Character 2">
-            <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/may.PNG" class="character" data-character="3" width="250" alt="Character 3">
+            <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/jason.PNG" class="character" data-character="1" alt="Character 1">
+            <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/shan.PNG" class="character" data-character="2" alt="Character 2">
+            <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/may.PNG" class="character" data-character="3" alt="Character 3">
         </div>
     </div>
 
@@ -138,16 +141,18 @@
             // Add more questions for different tiles here...
         };
 
-        // Generate the game board
+        // Generate the game board and tiles
         const board = document.getElementById('game-board');
         const tileTypes = Array(TILE_COUNT).fill("plain-tile");
         tileTypes[5] = tileTypes[15] = tileTypes[30] = tileTypes[45] = "question-tile";
 
+        const tiles = [];
         tileTypes.forEach((type, i) => {
             const tile = document.createElement('div');
             tile.className = `tile ${type}`;
             tile.innerText = i + 1;
             board.appendChild(tile);
+            tiles.push(tile); // Store reference to each tile for positioning
         });
 
         // Character selection
@@ -200,10 +205,13 @@
         }
 
         function updatePiecePosition(piece, position) {
-            const row = Math.floor(position / TILES_PER_ROW);
-            const col = position % TILES_PER_ROW;
-            piece.style.top = `${row * 120}px`;
-            piece.style.left = `${col * 60}px`;
+            const tile = tiles[position];
+            const rect = tile.getBoundingClientRect();
+            const boardRect = board.getBoundingClientRect();
+
+            // Center the piece in the tile
+            piece.style.top = `${rect.top - boardRect.top + tile.offsetHeight / 2 - piece.offsetHeight / 2}px`;
+            piece.style.left = `${rect.left - boardRect.left + tile.offsetWidth / 2 - piece.offsetWidth / 2}px`;
         }
 
         function checkTile(position, player) {
@@ -231,4 +239,5 @@
         }
     </script>
 </body>
-</html>
+</html
+
