@@ -20,13 +20,13 @@
             width: 600px;
             height: 600px;
             background-color: #f4f4f4;
-            position: relative;
             border: 10px solid #333;
             border-radius: 15px;
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             grid-template-rows: repeat(5, 1fr);
             gap: 2px;
+            position: relative;
         }
 
         .tile {
@@ -47,6 +47,14 @@
         .question-tile {
             background-color: gold; /* Question tile */
             color: black;
+        }
+
+        /* Player and bot piece styling */
+        .piece {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            transition: top 0.5s, left 0.5s;
         }
 
         #character-selection, #game-controls {
@@ -76,14 +84,6 @@
             border-radius: 5px;
             cursor: pointer;
         }
-
-        /* Player pieces */
-        .player, .bot {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            transition: transform 0.5s ease;
-        }
     </style>
 </head>
 <body>
@@ -109,11 +109,13 @@
 
     <!-- JavaScript for Game Logic -->
     <script>
+        const TILE_COUNT = 50;
+        const TILES_PER_ROW = 10;
+
         let playerPosition = 0;
         let botPosition = 0;
         let currentPlayer = 'player';
-        let playerPiece;
-        let botPiece;
+        let playerPiece, botPiece;
 
         // Define questions for the question tiles
         const questions = {
@@ -138,7 +140,7 @@
 
         // Generate the game board
         const board = document.getElementById('game-board');
-        const tileTypes = Array(50).fill("plain-tile");
+        const tileTypes = Array(TILE_COUNT).fill("plain-tile");
         tileTypes[5] = tileTypes[15] = tileTypes[30] = tileTypes[45] = "question-tile";
 
         tileTypes.forEach((type, i) => {
@@ -164,13 +166,13 @@
             // Create player piece
             playerPiece = document.createElement('img');
             playerPiece.src = characterSrc;
-            playerPiece.classList.add('player');
+            playerPiece.classList.add('piece');
             document.body.appendChild(playerPiece);
 
             // Create bot piece
             botPiece = document.createElement('img');
             botPiece.src = 'https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/hayley.PNG';
-            botPiece.classList.add('bot');
+            botPiece.classList.add('piece');
             document.body.appendChild(botPiece);
 
             updatePiecePosition(playerPiece, playerPosition);
@@ -181,8 +183,7 @@
             const diceRoll = Math.floor(Math.random() * 6) + 1;
             document.getElementById('dice-result').innerText = `You rolled a ${diceRoll}`;
             if (currentPlayer === 'player') {
-                playerPosition += diceRoll;
-                if (playerPosition >= tileTypes.length) playerPosition = tileTypes.length - 1;
+                playerPosition = Math.min(playerPosition + diceRoll, TILE_COUNT - 1); // Ensure player doesn't exceed last tile
                 updatePiecePosition(playerPiece, playerPosition);
                 checkTile(playerPosition, "player");
                 currentPlayer = 'bot';
@@ -192,18 +193,17 @@
 
         function botMove() {
             const diceRoll = Math.floor(Math.random() * 6) + 1;
-            botPosition += diceRoll;
-            if (botPosition >= tileTypes.length) botPosition = tileTypes.length - 1;
+            botPosition = Math.min(botPosition + diceRoll, TILE_COUNT - 1); // Ensure bot doesn't exceed last tile
             updatePiecePosition(botPiece, botPosition);
             checkTile(botPosition, "bot");
             currentPlayer = 'player';
         }
 
         function updatePiecePosition(piece, position) {
-            const tiles = document.querySelectorAll('.tile');
-            const tile = tiles[position];
-            const rect = tile.getBoundingClientRect();
-            piece.style.transform = `translate(${rect.left}px, ${rect.top}px)`;
+            const row = Math.floor(position / TILES_PER_ROW);
+            const col = position % TILES_PER_ROW;
+            piece.style.top = `${row * 120}px`;
+            piece.style.left = `${col * 60}px`;
         }
 
         function checkTile(position, player) {
@@ -229,10 +229,6 @@
                 updatePiecePosition(playerPiece, playerPosition);
             }
         }
-    </script>
-</body>
-</html>
-
     </script>
 </body>
 </html>
