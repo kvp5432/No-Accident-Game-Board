@@ -7,7 +7,7 @@
     <style>
         /* Basic Styling */
         body {
-            background: darkgreen url('https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/background.jpg') no-repeat center center fixed; /* Update 'background.png' with your custom background image */
+            background: darkgreen url('https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/background.jpg') no-repeat center center fixed;
             background-size: cover;
             color: white;
             display: flex;
@@ -76,7 +76,7 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        
+
         /* Player pieces */
         .player, .bot {
             position: absolute;
@@ -91,30 +91,14 @@
     <div id="character-selection">
         <h1>Select Your Character</h1>
         <div id="character-options">
-            <<img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/jason.PNG" class="character" data-character="1" width="50" alt="Character 1">
+            <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/jason.PNG" class="character" data-character="1" width="50" alt="Character 1">
             <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/shan.PNG" class="character" data-character="2" width="50" alt="Character 2">
             <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/may.PNG" class="character" data-character="3" width="50" alt="Character 3">
         </div>
     </div>
 
     <!-- Game Board -->
-    <div id="game-board">
-        <!-- Generate 50 tiles -->
-        <!-- For simplicity, some tiles are hardcoded as question tiles -->
-        <!-- Tiles are numbered, but the number display is optional -->
-        <script>
-            const board = document.getElementById('game-board');
-            const tileTypes = Array(50).fill("plain-tile");
-            tileTypes[5] = tileTypes[15] = tileTypes[30] = tileTypes[45] = "question-tile"; // example question tiles
-
-            tileTypes.forEach((type, i) => {
-                const tile = document.createElement('div');
-                tile.className = `tile ${type}`;
-                tile.innerText = i + 1; // Display tile number
-                board.appendChild(tile);
-            });
-        </script>
-    </div>
+    <div id="game-board"></div>
 
     <!-- Game Controls -->
     <div id="game-controls" style="display: none;">
@@ -131,7 +115,40 @@
         let playerPiece;
         let botPiece;
 
-        // Handle character selection
+        // Define questions for the question tiles
+        const questions = {
+            5: {
+                question: "What is the capital of France?",
+                options: [
+                    { answer: "Paris", move: 2 },
+                    { answer: "London", move: -1 },
+                    { answer: "Berlin", move: -2 }
+                ]
+            },
+            15: {
+                question: "What is 2 + 2?",
+                options: [
+                    { answer: "3", move: -1 },
+                    { answer: "4", move: 2 },
+                    { answer: "5", move: -1 }
+                ]
+            },
+            // Add more questions for different tiles here...
+        };
+
+        // Generate the game board
+        const board = document.getElementById('game-board');
+        const tileTypes = Array(50).fill("plain-tile");
+        tileTypes[5] = tileTypes[15] = tileTypes[30] = tileTypes[45] = "question-tile";
+
+        tileTypes.forEach((type, i) => {
+            const tile = document.createElement('div');
+            tile.className = `tile ${type}`;
+            tile.innerText = i + 1;
+            board.appendChild(tile);
+        });
+
+        // Character selection
         document.querySelectorAll('.character').forEach(character => {
             character.addEventListener('click', (e) => {
                 document.querySelectorAll('.character').forEach(c => c.classList.remove('selected'));
@@ -141,7 +158,6 @@
         });
 
         function initializeGame(characterSrc) {
-            // Hide character selection and show game controls
             document.getElementById('character-selection').style.display = 'none';
             document.getElementById('game-controls').style.display = 'block';
 
@@ -153,7 +169,7 @@
 
             // Create bot piece
             botPiece = document.createElement('img');
-            botPiece.src = 'https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/hayley.PNG'; // Update this with the correct bot image path
+            botPiece.src = 'https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/hayley.PNG';
             botPiece.classList.add('bot');
             document.body.appendChild(botPiece);
 
@@ -166,16 +182,18 @@
             document.getElementById('dice-result').innerText = `You rolled a ${diceRoll}`;
             if (currentPlayer === 'player') {
                 playerPosition += diceRoll;
+                if (playerPosition >= tileTypes.length) playerPosition = tileTypes.length - 1;
                 updatePiecePosition(playerPiece, playerPosition);
                 checkTile(playerPosition, "player");
                 currentPlayer = 'bot';
-                setTimeout(botMove, 1000); // bot moves after a delay
+                setTimeout(botMove, 1000);
             }
         });
 
         function botMove() {
             const diceRoll = Math.floor(Math.random() * 6) + 1;
             botPosition += diceRoll;
+            if (botPosition >= tileTypes.length) botPosition = tileTypes.length - 1;
             updatePiecePosition(botPiece, botPosition);
             checkTile(botPosition, "bot");
             currentPlayer = 'player';
@@ -183,7 +201,6 @@
 
         function updatePiecePosition(piece, position) {
             const tiles = document.querySelectorAll('.tile');
-            if (position >= tiles.length) position = tiles.length - 1; // Ensure position doesn't exceed tile count
             const tile = tiles[position];
             const rect = tile.getBoundingClientRect();
             piece.style.transform = `translate(${rect.left}px, ${rect.top}px)`;
@@ -192,12 +209,30 @@
         function checkTile(position, player) {
             const tileType = tileTypes[position];
             if (tileType === "question-tile" && player === "player") {
-                setTimeout(() => {
-                    alert("Answer this question! Correct answer lets you move forward.");
-                    // Add question and answer logic here
-                }, 500);
+                askQuestion(position);
             }
         }
+
+        function askQuestion(tilePosition) {
+            const questionData = questions[tilePosition];
+            if (!questionData) return;
+
+            const answer = prompt(
+                `${questionData.question}\n` +
+                questionData.options.map((opt, i) => `${i + 1}: ${opt.answer}`).join('\n')
+            );
+
+            const choice = parseInt(answer) - 1;
+            if (choice >= 0 && choice < questionData.options.length) {
+                playerPosition += questionData.options[choice].move;
+                if (playerPosition < 0) playerPosition = 0;
+                updatePiecePosition(playerPiece, playerPosition);
+            }
+        }
+    </script>
+</body>
+</html>
+
     </script>
 </body>
 </html>
