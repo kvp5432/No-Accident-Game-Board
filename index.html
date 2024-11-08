@@ -3,18 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Simple Game</title>
+    <title>No Accident Island Adventure</title>
+    <style>
+        /* Basic Styling */
+        body {
+            background: darkgreen url('images/background.png') no-repeat center center fixed; /* Update 'background.png' with your custom background image */
+            background-size: cover;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+
+        #game-board {
+            width: 600px;
+            height: 600px;
+            background-color: #f4f4f4;
+            position: relative;
+            border: 10px solid #333;
+            border-radius: 15px;
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 2px;
+        }
+
+        .tile {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8em;
+            border-radius: 5px;
+        }
+
+        .plain-tile {
+            background-color: #8b4513; /* Plain brown tile */
+        }
+
+        .question-tile {
+            background-color: gold; /* Question tile */
+            color: black;
+        }
+
+        #character-selection, #game-controls {
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .character {
+            cursor: pointer;
+            border: 2px solid transparent;
+            margin: 5px;
+        }
+
+        .character.selected {
+            border-color: #ff0;
+        }
+
+        #dice-roll {
+            margin-top: 10px;
+            font-size: 1.2em;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        /* Player pieces */
+        .player, .bot {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            transition: transform 0.5s ease;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to My Game!</h1>
-    <p>Press the button to play:</p>
-    <button onclick="playGame()">Play</button>
-    
+    <!-- Character Selection Screen -->
+    <div id="character-selection">
+        <h1>Select Your Character</h1>
+        <div id="character-options">
+            <img src="images/character1.png" class="character" data-character="1" width="50" alt="Character 1">
+            <img src="images/character2.png" class="character" data-character="2" width="50" alt="Character 2">
+            <!-- Add more characters as needed -->
+        </div>
+    </div>
+
+    <!-- Game Board -->
+    <div id="game-board">
+        <!-- Generate 50 tiles -->
+        <!-- For simplicity, some tiles are hardcoded as question tiles -->
+        <!-- Tiles are numbered, but the number display is optional -->
+        <script>
+            const board = document.getElementById('game-board');
+            const tileTypes = Array(50).fill("plain-tile");
+            tileTypes[5] = tileTypes[15] = tileTypes[30] = tileTypes[45] = "question-tile"; // example question tiles
+
+            tileTypes.forEach((type, i) => {
+                const tile = document.createElement('div');
+                tile.className = `tile ${type}`;
+                tile.innerText = i + 1; // Display tile number
+                board.appendChild(tile);
+            });
+        </script>
+    </div>
+
+    <!-- Game Controls -->
+    <div id="game-controls" style="display: none;">
+        <h2 id="player-turn">Player's Turn</h2>
+        <button id="dice-roll">Roll Dice</button>
+        <p id="dice-result"></p>
+    </div>
+
+    <!-- JavaScript for Game Logic -->
     <script>
-        // Simple JavaScript game logic
-        function playGame() {
-            const result = Math.random() > 0.5 ? "You Win!" : "Try Again!";
-            alert(result);
+        let playerPosition = 0;
+        let botPosition = 0;
+        let currentPlayer = 'player';
+        let playerPiece;
+        let botPiece;
+
+        // Handle character selection
+        document.querySelectorAll('.character').forEach(character => {
+            character.addEventListener('click', (e) => {
+                document.querySelectorAll('.character').forEach(c => c.classList.remove('selected'));
+                character.classList.add('selected');
+                initializeGame(character.src);
+            });
+        });
+
+        function initializeGame(characterSrc) {
+            // Hide character selection and show game controls
+            document.getElementById('character-selection').style.display = 'none';
+            document.getElementById('game-controls').style.display = 'block';
+
+            // Create player piece
+            playerPiece = document.createElement('img');
+            playerPiece.src = characterSrc;
+            playerPiece.classList.add('player');
+            document.body.appendChild(playerPiece);
+
+            // Create bot piece
+            botPiece = document.createElement('img');
+            botPiece.src = 'images/bot.png'; // Update this with the correct bot image path
+            botPiece.classList.add('bot');
+            document.body.appendChild(botPiece);
+
+            updatePiecePosition(playerPiece, playerPosition);
+            updatePiecePosition(botPiece, botPosition);
+        }
+
+        document.getElementById('dice-roll').addEventListener('click', () => {
+            const diceRoll = Math.floor(Math.random() * 6) + 1;
+            document.getElementById('dice-result').innerText = `You rolled a ${diceRoll}`;
+            if (currentPlayer === 'player') {
+                playerPosition += diceRoll;
+                updatePiecePosition(playerPiece, playerPosition);
+                checkTile(playerPosition, "player");
+                currentPlayer = 'bot';
+                setTimeout(botMove, 1000); // bot moves after a delay
+            }
+        });
+
+        function botMove() {
+            const diceRoll = Math.floor(Math.random() * 6) + 1;
+            botPosition += diceRoll;
+            updatePiecePosition(botPiece, botPosition);
+            checkTile(botPosition, "bot");
+            currentPlayer = 'player';
+        }
+
+        function updatePiecePosition(piece, position) {
+            const tiles = document.querySelectorAll('.tile');
+            if (position >= tiles.length) position = tiles.length - 1; // Ensure position doesn't exceed tile count
+            const tile = tiles[position];
+            const rect = tile.getBoundingClientRect();
+            piece.style.transform = `translate(${rect.left}px, ${rect.top}px)`;
+        }
+
+        function checkTile(position, player) {
+            const tileType = tileTypes[position];
+            if (tileType === "question-tile" && player === "player") {
+                setTimeout(() => {
+                    alert("Answer this question! Correct answer lets you move forward.");
+                    // Add question and answer logic here
+                }, 500);
+            }
         }
     </script>
 </body>
