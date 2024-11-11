@@ -38,6 +38,7 @@
             font-weight: bold;
             font-size: 0.8em;
             border-radius: 5px;
+            position: relative;
         }
 
         .plain-tile {
@@ -51,11 +52,12 @@
 
         /* Player and bot piece styling */
         .piece {
-            width: 50px; /* Increased size */
-            height: 50px;
+            width: 45px; /* Slightly smaller for better centering */
+            height: 45px;
             position: absolute;
             transition: top 0.5s, left 0.5s;
             z-index: 10; /* Ensure pieces are above tiles */
+            transform: translate(-50%, -50%);
         }
 
         #character-selection, #game-controls {
@@ -207,7 +209,6 @@
             const row = Math.floor(position / TILES_PER_ROW) + 1;
             const col = (position % TILES_PER_ROW) + 1;
 
-            // Set grid positioning for the piece directly on the tile
             piece.style.gridRowStart = row;
             piece.style.gridColumnStart = col;
             piece.style.position = 'absolute';
