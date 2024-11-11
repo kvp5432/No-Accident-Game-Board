@@ -7,7 +7,7 @@
     <style>
         /* Basic Styling */
         body {
-            background: darkgreen url('https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/image1.png') no-repeat center center fixed;
+            background: darkgreen url('https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/background.jpg') no-repeat center center fixed;
             background-size: cover;
             color: white;
             display: flex;
@@ -171,13 +171,13 @@
             playerPiece = document.createElement('img');
             playerPiece.src = characterSrc;
             playerPiece.classList.add('piece');
-            document.body.appendChild(playerPiece);
+            board.appendChild(playerPiece);
 
             // Create bot piece
             botPiece = document.createElement('img');
             botPiece.src = 'https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/hayley.PNG';
             botPiece.classList.add('piece');
-            document.body.appendChild(botPiece);
+            board.appendChild(botPiece);
 
             updatePiecePosition(playerPiece, playerPosition);
             updatePiecePosition(botPiece, botPosition);
@@ -207,9 +207,12 @@
             const row = Math.floor(position / TILES_PER_ROW) + 1;
             const col = (position % TILES_PER_ROW) + 1;
 
+            // Set grid positioning for the piece directly on the tile
             piece.style.gridRowStart = row;
             piece.style.gridColumnStart = col;
             piece.style.position = 'absolute';
+            piece.style.top = '50%';
+            piece.style.left = '50%';
             piece.style.transform = 'translate(-50%, -50%)';
         }
 
@@ -233,4 +236,9 @@
             if (choice >= 0 && choice < questionData.options.length) {
                 playerPosition += questionData.options[choice].move;
                 if (playerPosition < 0) playerPosition = 0;
-                updatePiecePosition(playerPiece, playerPosition
+                updatePiecePosition(playerPiece, playerPosition);
+            }
+        }
+    </script>
+</body>
+</html>
