@@ -7,8 +7,7 @@
     <style>
         /* Basic Styling */
         body {
-            background: darkgreen url('https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/background.jpg') no-repeat center center fixed;
-            background-size: cover;
+            background: darkgreen;
             color: white;
             display: flex;
             flex-direction: column;
@@ -17,16 +16,16 @@
         }
 
         #game-board {
-            width: 600px;
-            height: 600px;
-            background-color: #f4f4f4;
-            border: 10px solid #333;
-            border-radius: 15px;
+            width: 500px;  /* Ensure square tiles */
+            height: 500px;
             display: grid;
-            grid-template-columns: repeat(10, 1fr);
+            grid-template-columns: repeat(5, 1fr); /* 5x5 grid */
             grid-template-rows: repeat(5, 1fr);
             gap: 2px;
             position: relative;
+            border: 5px solid #333;
+            border-radius: 15px;
+            background-color: #f4f4f4;
         }
 
         .tile {
@@ -36,7 +35,7 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 0.8em;
+            font-size: 1em;
             border-radius: 5px;
             position: relative;
         }
@@ -52,11 +51,11 @@
 
         /* Player and bot piece styling */
         .piece {
-            width: 45px; /* Slightly smaller for better centering */
+            width: 45px;
             height: 45px;
             position: absolute;
             transition: top 0.5s, left 0.5s;
-            z-index: 10; /* Ensure pieces are above tiles */
+            z-index: 10;
             transform: translate(-50%, -50%);
         }
 
@@ -71,7 +70,7 @@
             cursor: pointer;
             border: 2px solid transparent;
             margin: 5px;
-            width: 75px; /* Larger selection images */
+            width: 75px;
         }
 
         .character.selected {
@@ -113,25 +112,25 @@
 
     <!-- JavaScript for Game Logic -->
     <script>
-        const TILE_COUNT = 50;
-        const TILES_PER_ROW = 10;
+        const TILE_COUNT = 25;
+        const TILES_PER_ROW = 5;
 
-        let playerPosition = 0;
-        let botPosition = 0;
+        let playerPosition = -1; // Start off the board
+        let botPosition = -1; // Start off the board
         let currentPlayer = 'player';
         let playerPiece, botPiece;
 
         // Define questions for the question tiles
         const questions = {
-            5: {
+            6: {
                 question: "What is the capital of France?",
                 options: [
-                    { answer: "Paris", move: 2 },
+                    { answer: "Paris", move: 1 },
                     { answer: "London", move: -1 },
                     { answer: "Berlin", move: -2 }
                 ]
             },
-            15: {
+            18: {
                 question: "What is 2 + 2?",
                 options: [
                     { answer: "3", move: -1 },
@@ -139,13 +138,12 @@
                     { answer: "5", move: -1 }
                 ]
             },
-            // Add more questions for different tiles here...
         };
 
         // Generate the game board and tiles
         const board = document.getElementById('game-board');
         const tileTypes = Array(TILE_COUNT).fill("plain-tile");
-        tileTypes[5] = tileTypes[15] = tileTypes[30] = tileTypes[45] = "question-tile";
+        tileTypes[6] = tileTypes[18] = "question-tile";
 
         const tiles = [];
         tileTypes.forEach((type, i) => {
@@ -189,7 +187,7 @@
             const diceRoll = Math.floor(Math.random() * 6) + 1;
             document.getElementById('dice-result').innerText = `You rolled a ${diceRoll}`;
             if (currentPlayer === 'player') {
-                playerPosition = Math.min(playerPosition + diceRoll, TILE_COUNT - 1); // Ensure player doesn't exceed last tile
+                playerPosition = Math.min(playerPosition + diceRoll, TILE_COUNT - 1);
                 updatePiecePosition(playerPiece, playerPosition);
                 checkTile(playerPosition, "player");
                 currentPlayer = 'bot';
@@ -199,22 +197,29 @@
 
         function botMove() {
             const diceRoll = Math.floor(Math.random() * 6) + 1;
-            botPosition = Math.min(botPosition + diceRoll, TILE_COUNT - 1); // Ensure bot doesn't exceed last tile
+            botPosition = Math.min(botPosition + diceRoll, TILE_COUNT - 1);
             updatePiecePosition(botPiece, botPosition);
             checkTile(botPosition, "bot");
             currentPlayer = 'player';
         }
 
         function updatePiecePosition(piece, position) {
-            const row = Math.floor(position / TILES_PER_ROW) + 1;
-            const col = (position % TILES_PER_ROW) + 1;
+            if (position === -1) {
+                // Place off the board initially
+                piece.style.display = 'none';
+            } else {
+                // Make piece visible and align on grid
+                piece.style.display = 'block';
+                const row = Math.floor(position / TILES_PER_ROW) + 1;
+                const col = (position % TILES_PER_ROW) + 1;
 
-            piece.style.gridRowStart = row;
-            piece.style.gridColumnStart = col;
-            piece.style.position = 'absolute';
-            piece.style.top = '50%';
-            piece.style.left = '50%';
-            piece.style.transform = 'translate(-50%, -50%)';
+                piece.style.gridRowStart = row;
+                piece.style.gridColumnStart = col;
+                piece.style.position = 'absolute';
+                piece.style.top = '50%';
+                piece.style.left = '50%';
+                piece.style.transform = 'translate(-50%, -50%)';
+            }
         }
 
         function checkTile(position, player) {
