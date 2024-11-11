@@ -3,82 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>No Accident Island Adventure</title>
+    <title>Simple Board Game</title>
     <style>
         /* Basic Styling */
         body {
-            background: darkgreen;
-            color: white;
             display: flex;
             flex-direction: column;
             align-items: center;
             font-family: Arial, sans-serif;
+            background-color: #2e8b57;
+            color: white;
+            margin: 0;
         }
 
         #game-board {
-            width: 500px;  /* Ensure square tiles */
+            width: 500px;
             height: 500px;
             display: grid;
-            grid-template-columns: repeat(5, 1fr); /* 5x5 grid */
-            grid-template-rows: repeat(5, 1fr);
+            grid-template-columns: repeat(5, 1fr); /* 5 columns for a 5x5 grid */
+            grid-template-rows: repeat(5, 1fr);    /* 5 rows */
             gap: 2px;
+            background-color: #333;
+            margin-top: 20px;
             position: relative;
-            border: 5px solid #333;
-            border-radius: 15px;
-            background-color: #f4f4f4;
         }
 
         .tile {
-            width: 100%;
-            height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 1em;
+            font-size: 1.2em;
+            color: #fff;
             border-radius: 5px;
             position: relative;
         }
 
-        .plain-tile {
-            background-color: #8b4513; /* Plain brown tile */
-        }
+        /* Tile Colors */
+        .tile:nth-child(odd) { background-color: #8b4513; } /* Brown */
+        .tile:nth-child(even) { background-color: #cd853f; } /* Lighter brown */
+        .question-tile { background-color: gold; color: black; } /* Gold tiles */
 
-        .question-tile {
-            background-color: gold; /* Question tile */
-            color: black;
-        }
-
-        /* Player and bot piece styling */
+        /* Player Piece */
         .piece {
-            width: 45px;
-            height: 45px;
+            width: 40px;
+            height: 40px;
             position: absolute;
             transition: top 0.5s, left 0.5s;
             z-index: 10;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%); /* Centering */
         }
 
-        #character-selection, #game-controls {
-            margin: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .character {
-            cursor: pointer;
-            border: 2px solid transparent;
-            margin: 5px;
-            width: 75px;
-        }
-
-        .character.selected {
-            border-color: #ff0;
+        #game-controls {
+            margin-top: 20px;
+            text-align: center;
         }
 
         #dice-roll {
-            margin-top: 10px;
             font-size: 1.2em;
             padding: 10px 20px;
             background-color: #007bff;
@@ -86,25 +67,45 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* Character Selection Modal */
+        #character-selection {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            color: black;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            display: none; /* Hidden initially */
+        }
+        
+        .character-option {
+            cursor: pointer;
+            margin: 5px;
+            width: 100px;
+            height: 100px;
         }
     </style>
 </head>
 <body>
-    <!-- Character Selection Screen -->
+    <!-- Character Selection Modal -->
     <div id="character-selection">
-        <h1>Select Your Character</h1>
-        <div id="character-options">
-            <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/jason.PNG" class="character" data-character="1" alt="Character 1">
-            <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/shan.PNG" class="character" data-character="2" alt="Character 2">
-            <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/may.PNG" class="character" data-character="3" alt="Character 3">
-        </div>
+        <h3>Select Your Character</h3>
+        <img src="character1.png" class="character-option" data-character="1" alt="Character 1">
+        <img src="character2.png" class="character-option" data-character="2" alt="Character 2">
+        <img src="character3.png" class="character-option" data-character="3" alt="Character 3">
     </div>
 
     <!-- Game Board -->
     <div id="game-board"></div>
 
     <!-- Game Controls -->
-    <div id="game-controls" style="display: none;">
+    <div id="game-controls">
         <h2 id="player-turn">Player's Turn</h2>
         <button id="dice-roll">Roll Dice</button>
         <p id="dice-result"></p>
@@ -112,139 +113,63 @@
 
     <!-- JavaScript for Game Logic -->
     <script>
-        const TILE_COUNT = 25;
+        const TILES = 25;
         const TILES_PER_ROW = 5;
 
         let playerPosition = -1; // Start off the board
-        let botPosition = -1; // Start off the board
-        let currentPlayer = 'player';
+        let botPosition = -1;
         let playerPiece, botPiece;
+        let currentPlayer = 'player';
+        const questionTiles = [3, 12, 19, 23];
 
-        // Define questions for the question tiles
         const questions = {
-            6: {
-                question: "What is the capital of France?",
-                options: [
-                    { answer: "Paris", move: 1 },
-                    { answer: "London", move: -1 },
-                    { answer: "Berlin", move: -2 }
-                ]
-            },
-            18: {
-                question: "What is 2 + 2?",
-                options: [
-                    { answer: "3", move: -1 },
-                    { answer: "4", move: 2 },
-                    { answer: "5", move: -1 }
-                ]
-            },
+            3: { question: "What is 2 + 2?", options: [{ answer: "4", move: 2 }, { answer: "5", move: -1 }] },
+            12: { question: "What is the capital of France?", options: [{ answer: "Paris", move: 3 }, { answer: "London", move: -2 }] },
+            19: { question: "Is Earth round?", options: [{ answer: "Yes", move: 1 }, { answer: "No", move: -3 }] },
+            23: { question: "What is the color of the sky?", options: [{ answer: "Blue", move: 2 }, { answer: "Green", move: -2 }] }
         };
 
-        // Generate the game board and tiles
-        const board = document.getElementById('game-board');
-        const tileTypes = Array(TILE_COUNT).fill("plain-tile");
-        tileTypes[6] = tileTypes[18] = "question-tile";
+        function initializeGame() {
+            // Set up the board and assign pieces
+            createBoard();
+            document.getElementById('character-selection').style.display = 'block'; // Show character selection
+        }
 
-        const tiles = [];
-        tileTypes.forEach((type, i) => {
-            const tile = document.createElement('div');
-            tile.className = `tile ${type}`;
-            tile.innerText = i + 1;
-            board.appendChild(tile);
-            tiles.push(tile); // Store reference to each tile for positioning
-        });
+        function createBoard() {
+            const board = document.getElementById('game-board');
+            for (let i = 0; i < TILES; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.innerText = snakeNumber(i + 1);
 
-        // Character selection
-        document.querySelectorAll('.character').forEach(character => {
-            character.addEventListener('click', (e) => {
-                document.querySelectorAll('.character').forEach(c => c.classList.remove('selected'));
-                character.classList.add('selected');
-                initializeGame(character.src);
-            });
-        });
+                // Add question tile styling
+                if (questionTiles.includes(snakeNumber(i + 1))) tile.classList.add('question-tile');
 
-        function initializeGame(characterSrc) {
-            document.getElementById('character-selection').style.display = 'none';
-            document.getElementById('game-controls').style.display = 'block';
+                board.appendChild(tile);
+            }
+        }
 
-            // Create player piece
+        function snakeNumber(i) {
+            const row = Math.floor((i - 1) / TILES_PER_ROW);
+            return row % 2 === 0 ? i : (row + 1) * TILES_PER_ROW - (i - row * TILES_PER_ROW) + 1;
+        }
+
+        function handleCharacterSelection(characterSrc) {
             playerPiece = document.createElement('img');
             playerPiece.src = characterSrc;
             playerPiece.classList.add('piece');
-            board.appendChild(playerPiece);
+            document.getElementById('game-board').appendChild(playerPiece);
 
-            // Create bot piece
             botPiece = document.createElement('img');
-            botPiece.src = 'https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/hayley.PNG';
+            botPiece.src = 'hayley.png';
             botPiece.classList.add('piece');
-            board.appendChild(botPiece);
+            document.getElementById('game-board').appendChild(botPiece);
 
-            updatePiecePosition(playerPiece, playerPosition);
-            updatePiecePosition(botPiece, botPosition);
+            document.getElementById('character-selection').style.display = 'none';
         }
 
-        document.getElementById('dice-roll').addEventListener('click', () => {
-            const diceRoll = Math.floor(Math.random() * 6) + 1;
-            document.getElementById('dice-result').innerText = `You rolled a ${diceRoll}`;
-            if (currentPlayer === 'player') {
-                playerPosition = Math.min(playerPosition + diceRoll, TILE_COUNT - 1);
-                updatePiecePosition(playerPiece, playerPosition);
-                checkTile(playerPosition, "player");
-                currentPlayer = 'bot';
-                setTimeout(botMove, 1000);
-            }
-        });
-
-        function botMove() {
-            const diceRoll = Math.floor(Math.random() * 6) + 1;
-            botPosition = Math.min(botPosition + diceRoll, TILE_COUNT - 1);
-            updatePiecePosition(botPiece, botPosition);
-            checkTile(botPosition, "bot");
-            currentPlayer = 'player';
-        }
-
-        function updatePiecePosition(piece, position) {
-            if (position === -1) {
-                // Place off the board initially
-                piece.style.display = 'none';
-            } else {
-                // Make piece visible and align on grid
-                piece.style.display = 'block';
-                const row = Math.floor(position / TILES_PER_ROW) + 1;
-                const col = (position % TILES_PER_ROW) + 1;
-
-                piece.style.gridRowStart = row;
-                piece.style.gridColumnStart = col;
-                piece.style.position = 'absolute';
-                piece.style.top = '50%';
-                piece.style.left = '50%';
-                piece.style.transform = 'translate(-50%, -50%)';
-            }
-        }
-
-        function checkTile(position, player) {
-            const tileType = tileTypes[position];
-            if (tileType === "question-tile" && player === "player") {
-                askQuestion(position);
-            }
-        }
-
-        function askQuestion(tilePosition) {
-            const questionData = questions[tilePosition];
-            if (!questionData) return;
-
-            const answer = prompt(
-                `${questionData.question}\n` +
-                questionData.options.map((opt, i) => `${i + 1}: ${opt.answer}`).join('\n')
-            );
-
-            const choice = parseInt(answer) - 1;
-            if (choice >= 0 && choice < questionData.options.length) {
-                playerPosition += questionData.options[choice].move;
-                if (playerPosition < 0) playerPosition = 0;
-                updatePiecePosition(playerPiece, playerPosition);
-            }
-        }
+        // Start the game on load
+        initializeGame();
     </script>
 </body>
 </html>
