@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Board Game</title>
+    <title>Island Escape Game</title>
     <style>
         /* Basic Styling */
         body {
@@ -16,12 +16,12 @@
             margin: 0;
         }
 
+        /* Game board styling */
         #game-board {
             width: 500px;
             height: 500px;
             display: grid;
-            grid-template-columns: repeat(5, 1fr); /* 5 columns for a 5x5 grid */
-            grid-template-rows: repeat(5, 1fr);    /* 5 rows */
+            grid-template-columns: repeat(5, 1fr); /* 5x5 grid */
             gap: 2px;
             background-color: #333;
             margin-top: 20px;
@@ -36,24 +36,45 @@
             font-size: 1.2em;
             color: #fff;
             border-radius: 5px;
-            position: relative;
         }
 
         /* Tile Colors */
-        .tile:nth-child(odd) { background-color: #8b4513; } /* Brown */
-        .tile:nth-child(even) { background-color: #cd853f; } /* Lighter brown */
-        .question-tile { background-color: gold; color: black; } /* Gold tiles */
+        .brown-tile { background-color: #8b4513; }
+        .lightbrown-tile { background-color: #cd853f; }
+        .gold-tile { background-color: gold; color: black; }
 
-        /* Player Piece */
+        /* Player and Bot Pieces */
         .piece {
             width: 40px;
             height: 40px;
             position: absolute;
             transition: top 0.5s, left 0.5s;
-            z-index: 10;
             transform: translate(-50%, -50%); /* Centering */
         }
 
+        /* Character selection popup */
+        #character-selection {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: black;
+        }
+
+        .character-option {
+            cursor: pointer;
+            border: 2px solid transparent;
+            margin: 10px;
+            width: 100px;
+        }
+
+        /* Game Controls */
         #game-controls {
             margin-top: 20px;
             text-align: center;
@@ -69,36 +90,15 @@
             cursor: pointer;
             margin-top: 10px;
         }
-
-        /* Character Selection Modal */
-        #character-selection {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            color: black;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
-            display: none; /* Hidden initially */
-        }
-        
-        .character-option {
-            cursor: pointer;
-            margin: 5px;
-            width: 100px;
-            height: 100px;
-        }
     </style>
 </head>
 <body>
-    <!-- Character Selection Modal -->
+    <!-- Character Selection Popup -->
     <div id="character-selection">
-        <h3>Select Your Character</h3>
-        <img src="character1.png" class="character-option" data-character="1" alt="Character 1">
-        <img src="character2.png" class="character-option" data-character="2" alt="Character 2">
-        <img src="character3.png" class="character-option" data-character="3" alt="Character 3">
+        <h1>Select Your Character</h1>
+        <img src="images/character1.png" class="character-option" data-character="1" alt="Character 1">
+        <img src="images/character2.png" class="character-option" data-character="2" alt="Character 2">
+        <img src="images/character3.png" class="character-option" data-character="3" alt="Character 3">
     </div>
 
     <!-- Game Board -->
@@ -106,7 +106,7 @@
 
     <!-- Game Controls -->
     <div id="game-controls">
-        <h2 id="player-turn">Player's Turn</h2>
+        <p id="game-text">To make it off the island, try your best to answer any golden questions and beat Hayley!</p>
         <button id="dice-roll">Roll Dice</button>
         <p id="dice-result"></p>
     </div>
@@ -115,61 +115,129 @@
     <script>
         const TILES = 25;
         const TILES_PER_ROW = 5;
+        const GOLD_TILES = [3, 12, 14, 23];
 
         let playerPosition = -1; // Start off the board
         let botPosition = -1;
+        let score = 0;
         let playerPiece, botPiece;
-        let currentPlayer = 'player';
-        const questionTiles = [3, 12, 19, 23];
 
-        const questions = {
-            3: { question: "What is 2 + 2?", options: [{ answer: "4", move: 2 }, { answer: "5", move: -1 }] },
-            12: { question: "What is the capital of France?", options: [{ answer: "Paris", move: 3 }, { answer: "London", move: -2 }] },
-            19: { question: "Is Earth round?", options: [{ answer: "Yes", move: 1 }, { answer: "No", move: -3 }] },
-            23: { question: "What is the color of the sky?", options: [{ answer: "Blue", move: 2 }, { answer: "Green", move: -2 }] }
-        };
+        // Character Selection Handler
+        document.querySelectorAll('.character-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const selectedCharacter = parseInt(option.getAttribute('data-character'));
+                document.getElementById('character-selection').style.display = 'none';
+                initializeGame(selectedCharacter);
+            });
+        });
 
-        function initializeGame() {
-            // Set up the board and assign pieces
-            createBoard();
-            document.getElementById('character-selection').style.display = 'block'; // Show character selection
-        }
-
-        function createBoard() {
+        // Initialize Game
+        function initializeGame(selectedCharacter) {
             const board = document.getElementById('game-board');
+            const gameText = document.getElementById('game-text');
+
+            // Create 25 tiles with snake pattern and color
             for (let i = 0; i < TILES; i++) {
                 const tile = document.createElement('div');
-                tile.className = 'tile';
-                tile.innerText = snakeNumber(i + 1);
+                tile.classList.add('tile');
 
-                // Add question tile styling
-                if (questionTiles.includes(snakeNumber(i + 1))) tile.classList.add('question-tile');
-
+                // Determine row/column snake pattern
+                const row = Math.floor(i / TILES_PER_ROW);
+                const isGold = GOLD_TILES.includes(i + 1);
+                tile.classList.add(isGold ? 'gold-tile' : (i % 2 === 0 ? 'brown-tile' : 'lightbrown-tile'));
+                tile.innerText = row % 2 === 0 ? i + 1 : row * TILES_PER_ROW + (TILES_PER_ROW - (i % TILES_PER_ROW) - 1) + 1;
                 board.appendChild(tile);
+            }
+
+            // Place player and bot pieces
+            playerPiece = document.createElement('img');
+            playerPiece.src = `images/character${selectedCharacter}.png`;
+            playerPiece.classList.add('piece');
+            board.appendChild(playerPiece);
+
+            botPiece = document.createElement('img');
+            botPiece.src = `images/bot.png`; // Assume bot's image is bot.png
+            botPiece.classList.add('piece');
+            board.appendChild(botPiece);
+
+            // Position pieces initially
+            updatePiecePosition(playerPiece, playerPosition);
+            updatePiecePosition(botPiece, botPosition);
+
+            // Initialize text
+            gameText.innerText = "To make it off the island, try your best to answer any golden questions and beat Hayley!";
+        }
+
+        // Player Roll
+        function playerRoll() {
+            const roll = Math.floor(Math.random() * 6) + 1;
+            score += roll;
+            updatePiecePosition(playerPiece, score);
+
+            document.getElementById('dice-result').innerText = `You rolled ${roll}! Now it’s Hayley’s turn!`;
+
+            if (score >= 25) {
+                isWinner();
+                return;
+            }
+
+            if (GOLD_TILES.includes(score)) {
+                goldTileAction();
+            }
+
+            setTimeout(botRoll, 3000);
+        }
+
+        // Bot Roll
+        function botRoll() {
+            botPosition += 3;
+            updatePiecePosition(botPiece, botPosition);
+
+            if (botPosition >= 25 && score < 25) {
+                isLoser();
+            } else {
+                document.getElementById('dice-result').innerText = "Now roll again!";
             }
         }
 
-        function snakeNumber(i) {
-            const row = Math.floor((i - 1) / TILES_PER_ROW);
-            return row % 2 === 0 ? i : (row + 1) * TILES_PER_ROW - (i - row * TILES_PER_ROW) + 1;
+        // Gold Tile Action
+        function goldTileAction() {
+            const correctAnswer = confirm("Answer the question correctly to move forward! Press OK for correct answer, Cancel for wrong.");
+            if (correctAnswer) {
+                score += 2; // Move forward
+            } else {
+                score -= 1; // Move backward
+            }
+            updatePiecePosition(playerPiece, score);
         }
 
-        function handleCharacterSelection(characterSrc) {
-            playerPiece = document.createElement('img');
-            playerPiece.src = characterSrc;
-            playerPiece.classList.add('piece');
-            document.getElementById('game-board').appendChild(playerPiece);
+        // Update piece position
+        function updatePiecePosition(piece, position) {
+            const tiles = document.querySelectorAll('.tile');
+            if (position >= 0 && position < TILES) {
+                const tile = tiles[position];
+                const rect = tile.getBoundingClientRect();
+                const boardRect = document.getElementById('game-board').getBoundingClientRect();
 
-            botPiece = document.createElement('img');
-            botPiece.src = 'hayley.png';
-            botPiece.classList.add('piece');
-            document.getElementById('game-board').appendChild(botPiece);
-
-            document.getElementById('character-selection').style.display = 'none';
+                piece.style.top = `${rect.top - boardRect.top + rect.height / 2}px`;
+                piece.style.left = `${rect.left - boardRect.left + rect.width / 2}px`;
+            }
         }
 
-        // Start the game on load
-        initializeGame();
+        // Winning Condition
+        function isWinner() {
+            alert("Congratulations, you won!");
+            location.reload();
+        }
+
+        // Losing Condition
+        function isLoser() {
+            alert("Oh no! Hayley won. You lost.");
+            location.reload();
+        }
+
+        // Roll Dice button event listener
+        document.getElementById('dice-roll').addEventListener('click', playerRoll);
     </script>
 </body>
 </html>
