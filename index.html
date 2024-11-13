@@ -11,10 +11,15 @@
             flex-direction: column;
             align-items: center;
             font-family: Arial, sans-serif;
-            background-color: #2e8b57;
+            background-color: #2e8b57; /* Fallback background color */
+            background-image: url('https://github.com/kvp5432/No-Accident-Game-Board/blob/main/images/background.jpg'); 
+            background-size: cover; 
+            background-position: center; 
+            background-repeat: no-repeat; 
             color: white;
             margin: 0;
         }
+
 
         /* Game board styling */
         #game-board {
@@ -36,6 +41,13 @@
             font-size: 1.2em;
             color: #fff;
             border-radius: 5px;
+        }
+
+        .last-tile {
+            background-image: url('https://path-to-your-image/image.png');
+            background-size: cover;
+            background-position: center;
+            color: white;
         }
 
         /* Tile Colors */
@@ -100,7 +112,7 @@
         <h1>Select Your Character</h1>
         <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/jason.PNG" class="character-option" data-character="jason" alt="JASON">
         <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/may.PNG" class="character-option" data-character="may" alt="MAY">
-        <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/shan.PNG" class="character-option" data-character="shanon" width="50" alt="SHANON">
+        <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/shan.PNG" class="character-option" data-character="shan" alt="SHANON">
     </div>
 
     <!-- Game Board -->
@@ -145,22 +157,25 @@
         });
 
         // Initialize Game
-        function initializeGame(selectedCharacter) {
-            const board = document.getElementById('game-board');
-            const gameText = document.getElementById('game-text');
+         function initializeGame(selectedCharacter) {
+                const board = document.getElementById('game-board');
+    
+              for (let i = 0; i < TILES; i++) {
+                 const tile = document.createElement('div');
+                 tile.classList.add('tile');
 
-            // Create 25 tiles with snake pattern and color
-            for (let i = 0; i < TILES; i++) {
-                const tile = document.createElement('div');
-                tile.classList.add('tile');
-
-                // Determine row/column snake pattern
-                const row = Math.floor(i / TILES_PER_ROW);
-                const isGold = GOLD_TILES.includes(i + 1);
-                tile.classList.add(isGold ? 'gold-tile' : (i % 2 === 0 ? 'brown-tile' : 'lightbrown-tile'));
-                tile.innerText = row % 2 === 0 ? i + 1 : row * TILES_PER_ROW + (TILES_PER_ROW - (i % TILES_PER_ROW) - 1) + 1;
+                if (i === TILES - 1) {
+                    tile.classList.add('last-tile'); // Add the special class to the last tile
+                } else {
+                    const row = Math.floor(i / TILES_PER_ROW);
+                    const isGold = GOLD_TILES.includes(i + 1);
+                    tile.classList.add(isGold ? 'gold-tile' : (i % 2 === 0 ? 'brown-tile' : 'lightbrown-tile'));
+                }
+    
+                tile.innerText = i + 1;
                 board.appendChild(tile);
             }
+        }
 
             // Place player and bot pieces
             playerPiece = document.createElement('img');
@@ -265,7 +280,7 @@
 
         // Winning Condition
         function isWinner() {
-            alert("Congratulations, you won!");
+            alert("Congratulations, you won!!");
             location.reload();
         }
 
