@@ -65,6 +65,8 @@
             flex-direction: column;
             align-items: center;
             color: black;
+            z-index: 1000; /* Ensures popup is in front */
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
         }
 
         .character-option {
@@ -96,9 +98,9 @@
     <!-- Character Selection Popup -->
     <div id="character-selection">
         <h1>Select Your Character</h1>
-        <img src="https://github.com/kvp5432/No-Accident-Game-Board/blob/main/images/jason.PNG" class="character-option" data-character="jason" alt="JASON">
-        <img src="https://github.com/kvp5432/No-Accident-Game-Board/blob/main/images/may.PNG" class="character-option" data-character="may" alt="MAY">
-        <img src="https://github.com/kvp5432/No-Accident-Game-Board/blob/main/images/shan.PNG" class="character-option" data-character="shan" alt="SHANNON">
+        <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/jason.PNG" class="character-option" data-character="jason" alt="JASON">
+        <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/may.PNG" class="character-option" data-character="may" alt="MAY">
+        <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/shan.PNG" class="character-option" data-character="shan" alt="SHANNON">
     </div>
 
     <!-- Game Board -->
@@ -125,7 +127,7 @@
         // Character Selection Handler
         document.querySelectorAll('.character-option').forEach(option => {
             option.addEventListener('click', () => {
-                const selectedCharacter = parseInt(option.getAttribute('data-character'));
+                const selectedCharacter = option.getAttribute('data-character');
                 document.getElementById('character-selection').style.display = 'none';
                 initializeGame(selectedCharacter);
             });
@@ -151,12 +153,12 @@
 
             // Place player and bot pieces
             playerPiece = document.createElement('img');
-            playerPiece.src = `https://github.com/kvp5432/No-Accident-Game-Board/tree/main/images${selectedCharacter}.PNG`;
+            playerPiece.src = `https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/${selectedCharacter}.PNG`;
             playerPiece.classList.add('piece');
             board.appendChild(playerPiece);
 
             botPiece = document.createElement('img');
-            botPiece.src = `https://github.com/kvp5432/No-Accident-Game-Board/blob/main/images/hayley.PNG`; // Assume bot's image is bot.png
+            botPiece.src = `https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/hayley.PNG`; // Assume bot's image is bot.png
             botPiece.classList.add('piece');
             board.appendChild(botPiece);
 
