@@ -100,7 +100,7 @@
         <h1>Select Your Character</h1>
         <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/jason.PNG" class="character-option" data-character="jason" alt="JASON">
         <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/may.PNG" class="character-option" data-character="may" alt="MAY">
-        <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/shan.PNG" class="character" data-character="2" width="50" alt="SHANON">
+        <img src="https://github.com/kvp5432/No-Accident-Game-Board/raw/main/images/shan.PNG" class="character-option" data-character="shanon" width="50" alt="SHANON">
     </div>
 
     <!-- Game Board -->
@@ -170,25 +170,35 @@
             gameText.innerText = "To make it off the island, try your best to answer any golden questions and beat Hayley!";
         }
 
-        // Player Roll
         function playerRoll() {
-            const roll = Math.floor(Math.random() * 6) + 1;
-            score += roll;
-            updatePiecePosition(playerPiece, score);
+    // Change the game text to "Rolling..."
+    document.getElementById('dice-result').innerText = "Rolling...";
 
-            document.getElementById('dice-result').innerText = `You rolled ${roll}! Now it’s Hayley’s turn!`;
+    // Wait 2 seconds before executing the roll logic
+    setTimeout(() => {
+        const roll = Math.floor(Math.random() * 6) + 1;
+        score += roll;
+        updatePiecePosition(playerPiece, score);
 
-            if (score >= 25) {
-                isWinner();
-                return;
-            }
+        // Update game text with the roll result and indicate it's Hayley's turn
+        document.getElementById('dice-result').innerText = `You rolled ${roll}! Now it’s Hayley’s turn!`;
 
-            if (GOLD_TILES.includes(score)) {
-                goldTileAction();
-            }
-
-            setTimeout(botRoll, 3000);
+        // Check if the player has won
+        if (score >= 25) {
+            isWinner();
+            return;
         }
+
+        // Check if the player landed on a gold tile
+        if (GOLD_TILES.includes(score)) {
+            goldTileAction();
+        }
+
+        // Wait 3 seconds before starting the bot's turn
+        setTimeout(botRoll, 3000);
+    }, 2000); // 2-second delay for "Rolling..."
+}
+
 
         // Bot Roll
         function botRoll() {
@@ -203,15 +213,29 @@
         }
 
         // Gold Tile Action
-        function goldTileAction() {
-            const correctAnswer = confirm("Answer the question correctly to move forward! Press OK for correct answer, Cancel for wrong.");
-            if (correctAnswer) {
-                score += 2; // Move forward
-            } else {
-                score -= 1; // Move backward
-            }
-            updatePiecePosition(playerPiece, score);
-        }
+function goldTileAction() {
+    // Display the question popup
+    document.getElementById('question-popup').style.display = 'block';
+}
+
+// Handle the answer selection and movement
+function handleAnswer(move) {
+    // Close the question popup
+    document.getElementById('question-popup').style.display = 'none';
+
+    // Update the score based on the chosen answer's move value
+    score += move;
+    updatePiecePosition(playerPiece, score);
+
+    // Update game text to show the effect of the chosen answer
+    const moveText = move > 0 ? `You move forward ${move} tile(s)!` : `You move backward ${Math.abs(move)} tile(s)!`;
+    document.getElementById('dice-result').innerText = moveText;
+
+    // Check if the player has won after moving
+    if (score >= 25) {
+        isWinner();
+    }
+}
 
         // Update piece position
         function updatePiecePosition(piece, position) {
