@@ -113,6 +113,17 @@
         <p id="dice-result"></p>
     </div>
 
+    <!-- HTML for Gold Tile Question Popup -->
+    <div id="question-popup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; color: black; padding: 20px; border-radius: 10px; text-align: center; z-index: 1000;">
+        <h2>Choose your answer</h2>
+        <p>Answer the question to determine your move:</p>
+        <button onclick="handleAnswer(1)">Option 1: Move forward 1 tile</button><br><br>
+        <button onclick="handleAnswer(2)">Option 2: Move forward 2 tiles</button><br><br>
+        <button onclick="handleAnswer(-1)">Option 3: Move backward 1 tile</button><br><br>
+        <button onclick="handleAnswer(-2)">Option 4: Move backward 2 tiles</button>
+    </div>
+
+
     <!-- JavaScript for Game Logic -->
     <script>
         const TILES = 25;
@@ -213,29 +224,31 @@
         }
 
         // Gold Tile Action
-function goldTileAction() {
-    // Display the question popup
-    document.getElementById('question-popup').style.display = 'block';
-}
+        function goldTileAction() {
+            // Display the question popup
+            document.getElementById('question-popup').style.display = 'block';
+        }
 
-// Handle the answer selection and movement
-function handleAnswer(move) {
-    // Close the question popup
-    document.getElementById('question-popup').style.display = 'none';
+        // Handle the answer selection and movement
+        function handleAnswer(move) {
+            // Close the question popup
+            document.getElementById('question-popup').style.display = 'none';
 
-    // Update the score based on the chosen answer's move value
-    score += move;
-    updatePiecePosition(playerPiece, score);
+            // Update the score based on the chosen answer's move value
+            score += move;
+            updatePiecePosition(playerPiece, score);
 
-    // Update game text to show the effect of the chosen answer
-    const moveText = move > 0 ? `You move forward ${move} tile(s)!` : `You move backward ${Math.abs(move)} tile(s)!`;
-    document.getElementById('dice-result').innerText = moveText;
+            // Update game text to show the effect of the chosen answer
+            const moveText = move > 0 ? `You move forward ${move} tile(s)!` : `You move backward ${Math.abs(move)} tile(s)!`;
+            document.getElementById('dice-result').innerText = moveText;
 
-    // Check if the player has won after moving
-    if (score >= 25) {
-        isWinner();
-    }
-}
+            // Check if the player has won after moving
+            if (score >= 25) {
+                isWinner();
+            }
+        }
+
+        
 
         // Update piece position
         function updatePiecePosition(piece, position) {
